@@ -1,48 +1,64 @@
-use std::{
-    env::{self, join_paths},
-    fs::read_dir,
-    path::{Path, PathBuf},
-};
+use std::{fs::read_dir, path::Path};
 
 use clap::Parser;
-use colored::Colorize;
+use colored::{ColoredString, Colorize};
 #[derive(Parser)]
 #[command(author, version, about, long_about = None)]
 struct Args {
     /// The directory to list files under
     path: String,
 
-    /// Optionally, list only directories
-    #[arg(short = 'd', long)]
-    dirs: Option<bool>,
+    /// Print directories and sub-directories without printing any contained files
+    #[arg(short, long)]
+    dirs: bool,
 
-    /// Optionally, list only files
-    #[arg(short = 'f', long)]
-    files: Option<bool>,
+    #[arg(long)]
+    max_depth: Option<usize>,
 }
-
 fn main() {
     let args = Args::parse();
-    println!("listing all directories under {} ...", args.path);
-    ls(Path::new(&args.path), 0);
+
+    ls(Path::new(&args.path), args.dirs, 0, args.max_depth);
 }
-fn ls(path: &Path, depth: usize) {
-    if !path.is_dir() {
+
+fn ls(path: &Path, dirs_only: bool, depth: usize, max_depth: Option<usize>) {
+    if !path.exists() {
         return;
     }
+
+    if !path.is_dir() && dirs_only {
+        return;
+    }
+
+    if path.file_name().is_none() {
+        return;
+    }
+
+    print_file(path, depth);
+
+    if path.is_dir() {
+        let result = read_dir(path).unwrap();
+        result.for_each(|dir| {
+            let entry = dir.unwrap().path();
+            ls(&entry, depth + 1, dirs_only);
+        });
+    }
+}
+
+fn print_file(path: &Path, num_tabs: usize) {
     let mut tabs: String = String::new();
-    for _ in 0..depth {
+    for _ in 0..num_tabs {
         tabs.push_str("\t");
     }
 
-    let file_name = path.file_name().unwrap().to_str().unwrap().green().bold();
-    println!("{} ∟ {}", tabs, file_name);
-
-    let result = read_dir(path).unwrap();
-    result.for_each(|dir| {
-        let entry = dir.unwrap().path();
-        ls(&entry, depth + 1);
-    });
+    let mut file: ColoredString = path.file_name().unwrap().to_str().unwrap().into();
+    if path.is_dir() {
+        file = file.red().bold();
+    } else if path.is_file() {
+        file = file.blue();
+    }
+    println!("{} {}", tabs, file);
+    // ∟⊢
 }
 
 #[cfg(test)]
