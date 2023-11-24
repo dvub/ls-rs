@@ -36,7 +36,6 @@ fn ls(path: &Path, dirs_only: bool, depth: usize, max_depth: Option<usize>) {
         println!("{}: directory doesn't exist. Exiting...", "Error".red());
         return;
     }
-
     // here we'll actually print out the file name
     print_file(path, depth);
 
@@ -56,7 +55,13 @@ fn print_file(path: &Path, num_tabs: usize) {
     // unwrapping a lot because we've already made all of these checks in the ls function
     // so this should be ok
     // as for to_str().unwrap(), idk.
-    let mut file: ColoredString = path.file_name().unwrap().to_str().unwrap().into();
+
+    let file_name = path.file_name().unwrap();
+
+    if file_name.to_str().is_none() {
+        return;
+    }
+    let mut file: ColoredString = file_name.to_str().unwrap().into();
 
     if file.starts_with('.') {
         return;
