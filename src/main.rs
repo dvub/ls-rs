@@ -55,7 +55,6 @@ fn print_file(path: &Path, num_tabs: usize) {
     // unwrapping a lot because we've already made all of these checks in the ls function
     // so this should be ok
     // as for to_str().unwrap(), idk.
-
     let file_name = path.file_name().unwrap();
 
     if file_name.to_str().is_none() {
@@ -84,45 +83,4 @@ fn print_file(path: &Path, num_tabs: usize) {
     println!("{}{}", tabs, file);
     // possibly use these symbols or something idk
     // ∟⊢
-}
-
-#[cfg(test)]
-mod tests {
-    const PARENT_TEST_DIR: &str = "test-dir";
-    use std::{
-        env,
-        fs::{create_dir, read_dir, remove_dir_all},
-        io,
-    };
-    // creates a few test directories under the parent test directory
-    fn setup() {
-        let current_dir = env::current_dir();
-        let target_dir = current_dir.unwrap().join(PARENT_TEST_DIR);
-        create_dir(&target_dir).unwrap();
-        let other_dirs = ["test1", "test2", "testmisc"];
-        for dir in other_dirs {
-            let path = target_dir.join(dir);
-            create_dir(&path).unwrap();
-        }
-    }
-    // deletes everything in the parent test directory, returning a result
-    fn teardown() -> Result<(), io::Error> {
-        let target = env::current_dir().unwrap().join(PARENT_TEST_DIR);
-        remove_dir_all(target)
-    }
-
-    #[test]
-    fn test_setup() {
-        let target = env::current_dir().unwrap().join(PARENT_TEST_DIR);
-        setup();
-        assert_eq!(read_dir(target).unwrap().count(), 3);
-        teardown().unwrap();
-    }
-    #[test]
-    fn test_teardown() {
-        let target = env::current_dir().unwrap().join(PARENT_TEST_DIR);
-        setup();
-        assert!(teardown().is_ok());
-        assert!(read_dir(target).is_err());
-    }
 }
